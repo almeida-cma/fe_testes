@@ -1,0 +1,1425 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>🎮 Desafio Front-End • 30 Questões Gamificadas</title>
+<style>
+:root {
+  --bg: #080d1a;
+  --surface: #121a2d;
+  --surface-card: #18243c;
+  --surface-hover: #223252;
+  --primary: #38bdf8;
+  --primary-dark: #0284c7;
+  --accent: #f59e0b;
+  --accent-orange: #ea580c;
+  --purple: #8b5cf6;
+  --pink: #ec4899;
+  --ok: #10b981;
+  --ok-bg: #064e3b;
+  --ok-text: #ecfdf5;
+  --no: #ef4444;
+  --no-bg: #450a0a;
+  --no-text: #fef2f2;
+  --text: #f8fafc;
+  --text-muted: #cbd5e1;
+  --border: #2a3854;
+  --border-focus: #38bdf8;
+  --radius: 16px;
+  --trans: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+*, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+body {
+  font-family: 'Segoe UI', system-ui, -apple-system, sans-serif;
+  background: radial-gradient(circle at 10% 10%, #1e1b4b 0%, var(--bg) 65%);
+  color: var(--text);
+  min-height: 100vh;
+  padding: 20px 14px 80px;
+  line-height: 1.6;
+}
+
+.container { max-width: 960px; margin: 0 auto; }
+
+/* HUD SUPERIOR */
+.hud-header {
+  background: #0f172a;
+  border: 2px solid var(--border);
+  border-radius: var(--radius);
+  padding: 20px 24px;
+  margin-bottom: 20px;
+  box-shadow: 0 10px 30px rgba(0,0,0,0.5);
+  position: sticky;
+  top: 10px;
+  z-index: 100;
+}
+
+.hud-top {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 12px;
+}
+
+.hud-title h1 {
+  font-size: 1.35rem;
+  font-weight: 900;
+  color: #ffffff;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+.hud-title h1 span { color: var(--primary); }
+.hud-title p { font-size: 0.84rem; color: var(--text-muted); }
+
+.stats-bar { display: flex; gap: 10px; align-items: center; }
+.stat-chip {
+  background: #1e293b;
+  border: 1px solid var(--border);
+  padding: 6px 14px;
+  border-radius: 30px;
+  font-size: 0.82rem;
+  font-weight: 800;
+}
+.stat-chip.score { color: #fbbf24; border-color: rgba(251,191,36,0.5); }
+.stat-chip.streak { color: #f472b6; border-color: rgba(244,114,182,0.5); }
+
+.hud-progress { margin-top: 14px; }
+.progress-meta {
+  display: flex;
+  justify-content: space-between;
+  font-size: 0.78rem;
+  font-weight: 700;
+  color: var(--text-muted);
+  margin-bottom: 6px;
+}
+.progress-track {
+  height: 10px;
+  background: #090e17;
+  border-radius: 20px;
+  overflow: hidden;
+  border: 1px solid var(--border);
+}
+.progress-fill {
+  height: 100%;
+  width: 0%;
+  background: linear-gradient(90deg, var(--primary), var(--purple), var(--pink));
+  transition: width 0.3s ease;
+}
+
+/* CARROSSEL E NAVEGAÇÃO */
+.nav-dots {
+  display: flex;
+  gap: 6px;
+  overflow-x: auto;
+  padding: 8px 2px 14px;
+  margin-bottom: 18px;
+  scrollbar-width: thin;
+}
+.nav-dot {
+  width: 30px;
+  height: 30px;
+  border-radius: 50%;
+  background: #1e293b;
+  border: 2px solid var(--border);
+  color: #cbd5e1;
+  font-size: 0.72rem;
+  font-weight: 800;
+  cursor: pointer;
+  flex-shrink: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: var(--trans);
+}
+.nav-dot:hover { border-color: var(--primary); color: #fff; }
+.nav-dot.active {
+  background: var(--primary-dark);
+  color: #ffffff;
+  border-color: #7dd3fc;
+  box-shadow: 0 0 12px rgba(56,189,248,0.6);
+}
+.nav-dot.done-ok { background: var(--ok-bg); border-color: var(--ok); color: #a7f3d0; }
+.nav-dot.done-no { background: var(--no-bg); border-color: var(--no); color: #fca5a5; }
+
+/* QUESTÃO CARD */
+.question-card {
+  background: var(--surface);
+  border: 2px solid var(--border);
+  border-radius: var(--radius);
+  padding: 28px;
+  box-shadow: 0 10px 30px rgba(0,0,0,0.4);
+  display: none;
+}
+.question-card.active { display: block; animation: fadeIn 0.25s ease-out; }
+@keyframes fadeIn { from { opacity: 0; transform: translateY(6px); } to { opacity: 1; transform: translateY(0); } }
+
+.q-badge {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  background: rgba(56,189,248,0.15);
+  border: 1px solid var(--primary);
+  color: #7dd3fc;
+  font-size: 0.76rem;
+  font-weight: 800;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+  padding: 5px 14px;
+  border-radius: 20px;
+  margin-bottom: 14px;
+}
+
+.q-statement {
+  font-size: 1.12rem;
+  font-weight: 700;
+  color: #ffffff;
+  line-height: 1.6;
+  margin-bottom: 12px;
+}
+.q-subtext {
+  font-size: 0.9rem;
+  color: var(--text-muted);
+  margin-bottom: 16px;
+  background: rgba(255,255,255,0.03);
+  padding: 8px 12px;
+  border-radius: 8px;
+  border-left: 3px solid var(--accent);
+}
+
+code {
+  background: #090e17;
+  color: #38bdf8;
+  padding: 3px 8px;
+  border-radius: 6px;
+  font-family: 'Courier New', monospace;
+  font-weight: 700;
+  font-size: 0.9em;
+  border: 1px solid #1e293b;
+}
+
+/* OPÇÕES DE MÚLTIPLA ESCOLHA & V/F */
+.options-grid { display: flex; flex-direction: column; gap: 10px; margin: 16px 0; }
+.opt-btn {
+  background: var(--surface-card);
+  border: 2px solid var(--border);
+  color: var(--text);
+  border-radius: 10px;
+  padding: 14px 18px;
+  font-size: 0.95rem;
+  text-align: left;
+  cursor: pointer;
+  transition: var(--trans);
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  font-family: inherit;
+}
+.opt-btn:hover:not(:disabled) {
+  background: var(--surface-hover);
+  border-color: var(--primary);
+  transform: translateX(4px);
+}
+.opt-btn.selected-multi {
+  border-color: var(--primary);
+  background: rgba(56,189,248,0.18);
+  box-shadow: 0 0 10px rgba(56,189,248,0.25);
+}
+.opt-btn.correct { background: var(--ok-bg) !important; border-color: var(--ok) !important; color: var(--ok-text) !important; }
+.opt-btn.wrong { background: var(--no-bg) !important; border-color: var(--no) !important; color: var(--no-text) !important; }
+.opt-btn.missed { border-color: #f59e0b !important; border-style: dashed !important; background: rgba(245,158,11,0.12) !important; }
+.opt-btn:disabled { cursor: default; }
+
+/* RESPOSTA DIGITADA / NUMÉRICA */
+.input-answer-box {
+  display: flex;
+  gap: 10px;
+  margin: 16px 0;
+  flex-wrap: wrap;
+}
+.custom-input {
+  flex: 1;
+  min-width: 220px;
+  padding: 13px 16px;
+  background: #090e17;
+  border: 2px solid var(--border);
+  border-radius: 8px;
+  color: #ffffff;
+  font-family: inherit;
+  font-size: 1rem;
+  outline: none;
+  transition: var(--trans);
+}
+.custom-input::placeholder { color: #64748b; }
+.custom-input:focus { border-color: var(--border-focus); box-shadow: 0 0 10px rgba(56,189,248,0.3); }
+.custom-input:disabled {
+  background: #0d1524 !important;
+  color: #ffffff !important;
+  opacity: 1 !important;
+  border-color: #475569 !important;
+}
+
+/* ORDENAÇÃO */
+.sortable-list { display: flex; flex-direction: column; gap: 8px; margin: 16px 0; }
+.sort-item {
+  background: var(--surface-card);
+  border: 1px solid var(--border);
+  padding: 12px 16px;
+  border-radius: 8px;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  font-size: 0.92rem;
+  font-weight: 700;
+  color: #ffffff;
+}
+.sort-actions { display: flex; gap: 6px; }
+.btn-sort {
+  background: #0f172a;
+  border: 1px solid var(--border);
+  color: #f8fafc;
+  width: 32px;
+  height: 32px;
+  border-radius: 6px;
+  cursor: pointer;
+  font-size: 0.85rem;
+  font-weight: bold;
+}
+.btn-sort:hover { color: var(--primary); border-color: var(--primary); }
+
+/* ASSOCIAÇÃO DE PARES */
+.match-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 14px; margin: 16px 0; }
+.match-col { display: flex; flex-direction: column; gap: 8px; }
+.match-btn {
+  background: var(--surface-card);
+  border: 2px solid var(--border);
+  color: var(--text);
+  padding: 12px 14px;
+  border-radius: 8px;
+  font-size: 0.88rem;
+  font-weight: 600;
+  cursor: pointer;
+  text-align: left;
+  transition: var(--trans);
+  font-family: inherit;
+  min-height: 52px;
+}
+.match-btn.selected { border-color: var(--accent); background: rgba(245,158,11,0.2); }
+.match-btn.matched { border-color: var(--ok); background: var(--ok-bg); color: var(--ok-text); cursor: default; }
+
+/* BUCKETS (CLASSIFICAÇÃO) */
+.buckets-container { display: grid; grid-template-columns: 1fr 1fr; gap: 14px; margin: 16px 0; }
+.bucket {
+  background: #0b1120;
+  border: 2px dashed #475569;
+  border-radius: 10px;
+  padding: 16px;
+  min-height: 130px;
+  cursor: pointer;
+}
+.bucket:hover { border-color: var(--primary); background: #0f182c; }
+.bucket-title { font-size: 0.84rem; font-weight: 800; color: var(--primary); margin-bottom: 10px; text-transform: uppercase; }
+.bucket-items { display: flex; flex-direction: column; gap: 8px; min-height: 50px; }
+.bucket-pool {
+  background: #090e17;
+  border: 1px solid var(--border);
+  padding: 14px;
+  border-radius: 8px;
+  margin-bottom: 12px;
+  display: flex;
+  gap: 8px;
+  flex-wrap: wrap;
+}
+.chip-item {
+  background: #1e293b;
+  border: 1px solid #334155;
+  color: #f8fafc;
+  padding: 7px 14px;
+  border-radius: 20px;
+  font-size: 0.84rem;
+  font-weight: 700;
+  cursor: pointer;
+  transition: var(--trans);
+}
+.chip-item.active-chip { border-color: var(--accent); background: var(--accent-orange); color: #fff; box-shadow: 0 0 10px rgba(234,88,12,0.4); }
+
+/* CAÇA AO ERRO */
+.code-error-box {
+  background: #060911;
+  border: 2px solid var(--border);
+  border-radius: 10px;
+  padding: 10px 0;
+  margin: 14px 0;
+  font-family: 'Courier New', monospace;
+  font-size: 0.9rem;
+}
+.code-line {
+  padding: 8px 18px;
+  cursor: pointer;
+  display: flex;
+  gap: 14px;
+  transition: var(--trans);
+  color: #f8fafc;
+}
+.code-line:hover { background: #162032; }
+.code-line.selected-err { background: var(--no-bg); border-left: 5px solid var(--no); color: #fee2e2; }
+.line-no { color: #64748b; user-select: none; width: 20px; text-align: right; }
+
+/* HOTSPOT BOX MODEL */
+.box-model-diagram {
+  background: #070c18;
+  border: 2px solid var(--border);
+  border-radius: 12px;
+  padding: 20px;
+  margin: 16px 0;
+  display: flex;
+  justify-content: center;
+}
+.bm-layer {
+  padding: 20px 24px;
+  border-radius: 8px;
+  cursor: pointer;
+  transition: var(--trans);
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  font-family: monospace;
+  font-size: 0.85rem;
+  font-weight: 900;
+  letter-spacing: 0.5px;
+}
+.bm-margin { background: #451a03; border: 2px dashed #f97316; color: #fed7aa; }
+.bm-border { background: #312e81; border: 2px solid #818cf8; color: #e0e7ff; margin-top: 10px; }
+.bm-padding { background: #064e3b; border: 2px dashed #34d399; color: #d1fae5; margin-top: 10px; }
+.bm-content { background: #0c4a6e; border: 2px solid #38bdf8; color: #e0f2fe; margin-top: 10px; padding: 18px 30px; }
+.bm-layer:hover { filter: brightness(1.25); transform: scale(1.01); }
+.bm-layer.picked { outline: 4px solid #facc15; }
+
+/* FEEDBACK & BOTÕES */
+.feedback-box {
+  display: none;
+  border-radius: 10px;
+  padding: 16px 20px;
+  margin-top: 18px;
+  font-size: 0.92rem;
+  line-height: 1.6;
+}
+.feedback-box.show { display: block; animation: fadeIn 0.2s ease-out; }
+.feedback-box.ok { background: var(--ok-bg); border-left: 5px solid var(--ok); color: var(--ok-text); }
+.feedback-box.no { background: var(--no-bg); border-left: 5px solid var(--no); color: var(--no-text); }
+
+.q-footer {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-top: 24px;
+  padding-top: 18px;
+  border-top: 1px solid var(--border);
+  gap: 10px;
+  flex-wrap: wrap;
+}
+
+.btn-action {
+  background: linear-gradient(135deg, var(--primary-dark), #2563eb);
+  color: #ffffff;
+  border: none;
+  padding: 12px 26px;
+  border-radius: 30px;
+  font-size: 0.9rem;
+  font-weight: 800;
+  cursor: pointer;
+  transition: var(--trans);
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  font-family: inherit;
+}
+.btn-action:hover:not(:disabled) {
+  transform: translateY(-2px);
+  box-shadow: 0 6px 18px rgba(2,132,199,0.5);
+}
+.btn-action:disabled { opacity: 0.45; cursor: not-allowed; }
+.btn-sec { background: #1e293b; border: 1px solid var(--border); color: #cbd5e1; }
+.btn-sec:hover { color: #fff; border-color: var(--primary); }
+
+/* SELECT DAS LACUNAS */
+select.gap-select {
+  background: #0d1524;
+  color: #38bdf8;
+  border: 2px solid #38bdf8;
+  padding: 5px 10px;
+  border-radius: 6px;
+  font-family: monospace;
+  font-weight: bold;
+  font-size: 0.95rem;
+}
+select.gap-select option {
+  background: #0d1524;
+  color: #f8fafc;
+}
+
+/* RELATÓRIO FINAL */
+.report-card {
+  display: none;
+  background: var(--surface);
+  border: 2px solid var(--primary-dark);
+  border-radius: var(--radius);
+  padding: 34px 28px;
+  text-align: center;
+}
+.report-card.show { display: block; animation: fadeIn 0.3s ease; }
+.report-score { font-size: 3.5rem; font-weight: 900; color: var(--primary); margin: 10px 0; }
+.report-textarea {
+  width: 100%;
+  height: 180px;
+  background: #070c16;
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  padding: 12px;
+  color: #e2e8f0;
+  font-family: monospace;
+  font-size: 0.82rem;
+  margin: 16px 0;
+  resize: vertical;
+}
+
+@media (max-width: 768px) {
+  .match-grid, .buckets-container { grid-template-columns: 1fr; }
+  .hud-top { flex-direction: column; align-items: flex-start; }
+  .question-card { padding: 20px 14px; }
+}
+</style>
+</head>
+<body>
+
+<div class="container">
+  <!-- HUD SUPERIOR -->
+  <header class="hud-header">
+    <div class="hud-top">
+      <div class="hud-title">
+        <h1>🎮 Desafio <span>Front-End 30</span></h1>
+        <p>HTML5 Semântico • Tabelas • Formulários • Box Model • CSS Grid & Flexbox</p>
+      </div>
+      <div class="stats-bar">
+        <div class="stat-chip score">⚡ <span id="val-score">0</span> pts</div>
+        <div class="stat-chip streak">🔥 Combo <span id="val-streak">0</span>x</div>
+      </div>
+    </div>
+    <div class="hud-progress">
+      <div class="progress-meta">
+        <span>Progresso Geral</span>
+        <span id="txt-prog">Questão 1 de 30</span>
+      </div>
+      <div class="progress-track">
+        <div class="progress-fill" id="bar-prog"></div>
+      </div>
+    </div>
+  </header>
+
+  <!-- NAVEGADOR NUMERADO (1 a 30) -->
+  <nav class="nav-dots" id="dots-container" aria-label="Navegador de Questões"></nav>
+
+  <!-- CONTAINER DE QUESTÕES -->
+  <main id="questions-viewport"></main>
+
+  <!-- RELATÓRIO FINAL -->
+  <section class="report-card" id="final-report">
+    <h2>🏆 Desafio Concluído!</h2>
+    <p style="color:var(--text-muted); margin-top:4px;">Confira seu desempenho nas 30 questões técnicas de Front-End</p>
+    <div class="report-score" id="final-score-txt">0 / 30</div>
+    <p id="final-feedback-badge" style="font-size:1.15rem; font-weight:800; margin-bottom:14px;"></p>
+    
+    <textarea class="report-textarea" id="report-copy-box" readonly></textarea>
+    
+    <div style="display:flex; justify-content:center; gap:10px; flex-wrap:wrap;">
+      <button type="button" class="btn-action" id="btn-copy-rep">📋 Copiar Resumo</button>
+      <button type="button" class="btn-action btn-sec" onclick="location.reload()">🔄 Reiniciar Desafio</button>
+    </div>
+  </section>
+</div>
+
+<script>
+/* ==========================================================================
+   BANCO DE 30 QUESTÕES REVISADAS COM TODAS AS TAGS ESCAPADAS
+   ========================================================================== */
+const DATABASE = [
+  // 1. Múltipla Escolha
+  {
+    id: 1,
+    type: "choice",
+    badge: "1. Múltipla Escolha • Tema 03",
+    title: "Qual dos elementos abaixo é um Void Element (elemento vazio que NUNCA deve receber tag de fechamento)?",
+    options: [
+      { t: "<p>", ok: false },
+      { t: "<img>", ok: true },
+      { t: "<article>", ok: false },
+      { t: "<span>", ok: false }
+    ],
+    exp: "A tag <code>&lt;img&gt;</code> é autocontida e vazia (void element): nunca se escreve <code>&lt;/img&gt;</code> em HTML5."
+  },
+  // 2. Verdadeiro ou Falso
+  {
+    id: 2,
+    type: "tf",
+    badge: "2. Verdadeiro ou Falso • Tema 03",
+    title: "Julgue a afirmativa: 'O HTML é uma linguagem de programação completa com suporte nativo a loops, condicionais e variáveis.'",
+    ok: false,
+    exp: "Falso! HTML é uma linguagem de MARCAÇÃO (HyperText Markup Language). Quem executa lógica, cálculos e loops na Web é o JavaScript."
+  },
+  // 3. Múltiplas Respostas (REFORMULADA COM UX CLARA)
+  {
+    id: 3,
+    type: "multi",
+    badge: "3. Múltiplas Respostas • Tema 03",
+    title: "Quais das seguintes tags são elementos estruturais semânticos introduzidos pelo padrão HTML5? (Selecione todas as corretas)",
+    options: [
+      { t: "<header>", ok: true },
+      { t: "<main>", ok: true },
+      { t: "<center>", ok: false },
+      { t: "<article>", ok: true }
+    ],
+    exp: "<code>&lt;header&gt;</code>, <code>&lt;main&gt;</code> e <code>&lt;article&gt;</code> são tags semânticas do HTML5. A tag <code>&lt;center&gt;</code> é obsoleta desde o HTML 4.01."
+  },
+  // 4. Resposta Digitada (REFORMULADA - TAGS ESCAPADAS)
+  {
+    id: 4,
+    type: "typed",
+    badge: "4. Resposta Digitada • Tema 05",
+    title: "Para vincular um <code>&lt;label for='email'&gt;</code> ao seu campo de texto com total acessibilidade, qual ATRIBUTO o <code>&lt;input&gt;</code> deve possuir com valor 'email'?",
+    sub: "Digite apenas o nome do atributo HTML (ex: name, id, class, type):",
+    answer: "id",
+    exp: "O atributo <code>for</code> do <code>&lt;label&gt;</code> conecta-se exclusivamente ao atributo <code>id</code> do campo <code>&lt;input&gt;</code>."
+  },
+  // 5. Cálculo Numérico de Box Model
+  {
+    id: 5,
+    type: "number",
+    badge: "5. Resposta Numérica • Box Model",
+    title: "Considere uma caixa com: <code>width: 80px</code>, <code>padding: 5px 10px</code> e <code>border: 2px solid black</code> em <code>content-box</code> padrão. Qual é a LARGURA FINAL RENDERIZADA?",
+    sub: "Informe apenas o número (ex: 104):",
+    answer: 104,
+    exp: "Cálculo: 80 (conteúdo) + 10 (pad esquerdo) + 10 (pad direito) + 2 (borda esq) + 2 (borda dir) = <strong>104px</strong>."
+  },
+  // 6. Ordenação
+  {
+    id: 6,
+    type: "sort",
+    badge: "6. Ordenação • Box Model",
+    title: "Ordene as quatro áreas do CSS Box Model a partir do centro (de DENTRO para FORA):",
+    items: ["Conteúdo (Content)", "Espaçamento Interno (Padding)", "Borda (Border)", "Espaçamento Externo (Margin)"],
+    correctOrder: [0, 1, 2, 3],
+    exp: "A ordem oficial de dentro para fora é: Conteúdo (miolo) ➔ Padding ➔ Borda ➔ Margin."
+  },
+  // 7. Associação de Pares
+  {
+    id: 7,
+    type: "match",
+    badge: "7. Associação de Pares • Semântica",
+    title: "Associe cada tag semântica ao seu papel estrutural:",
+    pairs: [
+      { left: "<nav>", right: "Bloco de links de navegação principal" },
+      { left: "<aside>", right: "Conteúdo periférico ou barra lateral" },
+      { left: "<footer>", right: "Rodapé da página ou de uma seção" }
+    ],
+    exp: "<code>&lt;nav&gt;</code> para navegação, <code>&lt;aside&gt;</code> para barras laterais e <code>&lt;footer&gt;</code> para rodapés."
+  },
+  // 8. Classificação por Categorias (Buckets)
+  {
+    id: 8,
+    type: "buckets",
+    badge: "8. Classificação • Métodos HTTP",
+    title: "Distribua cada característica para o método de envio de formulário correspondente:",
+    buckets: ["Método GET", "Método POST"],
+    items: [
+      { text: "Dados visíveis na barra de URL após '?'", b: 0 },
+      { text: "Dados encapsulados no corpo da requisição", b: 1 },
+      { text: "Recomendado para buscas e filtros compartilháveis", b: 0 },
+      { text: "Recomendado para cadastros e envio de senhas", b: 1 }
+    ],
+    exp: "GET expõe os parâmetros na URL; POST transmite os dados ocultos no corpo da mensagem."
+  },
+  // 9. Completar Lacunas
+  {
+    id: 9,
+    type: "gap",
+    badge: "9. Completar Lacunas • Tabelas",
+    title: "Complete o trecho para associar formalmente o cabeçalho à sua coluna na árvore de acessibilidade:",
+    snippet: '<th _____1_____="col">Nome do Aluno</th>',
+    options: ["scope", "colspan", "target", "role"],
+    correct: "scope",
+    exp: "<code>scope='col'</code> indica a leitores de tela que o cabeçalho <code>&lt;th&gt;</code> titula aquela coluna vertical."
+  },
+  // 10. Hotspot em Diagrama
+  {
+    id: 10,
+    type: "hotspot",
+    badge: "10. Hotspot • Box Model",
+    title: "No diagrama abaixo, CLIQUE na camada que herda a cor de fundo (background-color) do elemento e fica DENTRO da borda:",
+    target: "padding",
+    exp: "O <strong>Padding</strong> é o espaçamento interno: fica delimitado pela borda e recebe a mesma cor de fundo do elemento."
+  },
+  // 11. Caça ao Erro
+  {
+    id: 11,
+    type: "errorcode",
+    badge: "11. Caça ao Erro • Sintaxe HTML5",
+    title: "Clique na linha do código HTML que comete um ERRO GRAVE de aninhamento:",
+    lines: [
+      "<table>",
+      "  <caption>Boletim 2026</caption>",
+      "  <tr><th>Aluno</th><th>Nota</th></tr>",
+      "  <p>Resultados sujeitos a alteração.</p>",
+      "</table>"
+    ],
+    errLine: 3,
+    exp: "A tag <code>&lt;p&gt;</code> não pode ser filha direta de <code>&lt;table&gt;</code>! Em tabelas, apenas caption, colgroup, thead, tbody, tfoot e tr são permitidos."
+  },
+  // 12. Seleção de Código Correto
+  {
+    id: 12,
+    type: "choice",
+    badge: "12. Seleção de Código • Box Model",
+    title: "Qual declaração CSS impede que padding e bordas aumentem o tamanho total declarado dos elementos em um layout responsivo?",
+    options: [
+      { t: "* { box-sizing: content-box; }", ok: false },
+      { t: "* { box-sizing: border-box; }", ok: true },
+      { t: "* { width: 100% !important; }", ok: false },
+      { t: "* { margin: 0 auto; }", ok: false }
+    ],
+    exp: "<code>* { box-sizing: border-box; }</code> faz com que padding e borda sejam contados DENTRO da largura declarada."
+  },
+  // 13. Previsão de Resultado (Output)
+  {
+    id: 13,
+    type: "choice",
+    badge: "13. Previsão de Layout • Flexbox",
+    title: "Em um cabeçalho com <code>display: flex</code> e <code>justify-content: space-between</code> contendo um Logo e uma Lista de Links, como eles se comportam?",
+    options: [
+      { t: "Ficam colados no centro da barra", ok: false },
+      { t: "O Logo vai para a ponta esquerda e os Links para a ponta direita", ok: true },
+      { t: "Empilham-se verticalmente em duas linhas separadas", ok: false },
+      { t: "Ocupam exatamente 50% de largura cada um", ok: false }
+    ],
+    exp: "<code>space-between</code> afasta os itens para as extremidades opostas do eixo principal."
+  },
+  // 14. Múltipla Escolha • Grid
+  {
+    id: 14,
+    type: "choice",
+    badge: "14. Múltipla Escolha • CSS Grid",
+    title: "Qual unidade exclusiva do CSS Grid representa uma fração proporcional do espaço disponível no container?",
+    options: [
+      { t: "rem", ok: false },
+      { t: "%", ok: false },
+      { t: "fr", ok: true },
+      { t: "vh", ok: false }
+    ],
+    exp: "<code>fr</code> (fractional unit) divide proporcionalmente o espaço livre restante entre colunas ou linhas."
+  },
+  // 15. Cálculo Numérico com border-box
+  {
+    id: 15,
+    type: "number",
+    badge: "15. Resposta Numérica • Box Model",
+    title: "Uma caixa possui <code>width: 300px</code>, <code>padding: 20px</code> e <code>border: 2px</code> COM <code>box-sizing: border-box</code>. Qual é a LARGURA TOTAL ocupada na tela?",
+    sub: "Digite apenas o número (ex: 300):",
+    answer: 300,
+    exp: "Com <code>border-box</code>, a largura total renderizada na tela é exatamente os <strong>300px</strong> declarados."
+  },
+  // 16. Verdadeiro ou Falso
+  {
+    id: 16,
+    type: "tf",
+    badge: "16. Verdadeiro ou Falso • CSS",
+    title: "Julgue a afirmativa: 'A propriedade CSS margin afasta o elemento de seus vizinhos e sua área de espaçamento é sempre transparente.'",
+    ok: true,
+    exp: "Verdadeiro! A margin cria respiro externo à borda e nunca herda a cor de fundo do elemento."
+  },
+  // 17. Múltipla Escolha • Tabelas
+  {
+    id: 17,
+    type: "choice",
+    badge: "17. Múltipla Escolha • Tabelas",
+    title: "Qual atributo deve ser usado para fazer uma mesma célula mesclar e ocupar duas linhas na vertical?",
+    options: [
+      { t: "colspan='2'", ok: false },
+      { t: "rowspan='2'", ok: true },
+      { t: "span='2'", ok: false },
+      { t: "scope='row'", ok: false }
+    ],
+    exp: "<code>rowspan</code> mescla linhas na vertical. <code>colspan</code> mescla colunas na horizontal."
+  },
+  // 18. Resposta Digitada • Grid
+  {
+    id: 18,
+    type: "typed",
+    badge: "18. Resposta Digitada • CSS Grid",
+    title: "Qual propriedade moderna do CSS Grid define o espaçamento entre linhas e colunas (sem precisar aplicar margin individual)?",
+    sub: "Digite apenas o nome da propriedade CSS:",
+    answer: "gap",
+    exp: "A propriedade <code>gap</code> define o espaçamento uniforme entre os grid-items."
+  },
+  // 19. Associação de Pares • Sintaxe CSS
+  {
+    id: 19,
+    type: "match",
+    badge: "19. Associação • Anatomia de Regra CSS",
+    title: "Na regra <code>h1 { color: blue; }</code>, relacione cada elemento ao seu termo técnico:",
+    pairs: [
+      { left: "h1", right: "Seletor (quem recebe o estilo)" },
+      { left: "color", right: "Propriedade (característica alterada)" },
+      { left: "blue", right: "Valor (dado atribuído)" }
+    ],
+    exp: "Seletor indica o elemento alvo; propriedade indica o que muda; valor indica o novo estado."
+  },
+  // 20. Múltiplas Respostas • Flexbox
+  {
+    id: 20,
+    type: "multi",
+    badge: "20. Múltiplas Respostas • Flexbox",
+    title: "Quais dos seguintes valores são opções válidas para a propriedade 'justify-content' no Flexbox? (Selecione todos)",
+    options: [
+      { t: "space-between", ok: true },
+      { t: "center", ok: true },
+      { t: "middle", ok: false },
+      { t: "flex-end", ok: true }
+    ],
+    exp: "<code>space-between</code>, <code>center</code> e <code>flex-end</code> são válidos. 'middle' não existe no Flexbox."
+  },
+  // 21. Verdadeiro ou Falso • Responsividade
+  {
+    id: 21,
+    type: "tf",
+    badge: "21. Verdadeiro ou Falso • @media",
+    title: "Uma regra '@media (min-width: 768px)' aplica suas instruções apenas em telas com largura de 768px ou MAIOR.",
+    ok: true,
+    exp: "Verdadeiro! <code>min-width</code> significa 'largura mínima': aplica estilos daquela medida para cima (padrão mobile-first)."
+  },
+  // 22. Classificação por Categorias (Grid x Flex)
+  {
+    id: 22,
+    type: "buckets",
+    badge: "22. Classificação • Grid vs Flexbox",
+    title: "Distribua os cenários de layout para a ferramenta mais recomendada:",
+    buckets: ["CSS Grid", "Flexbox"],
+    items: [
+      { text: "Estrutura macro de página (topo, barra lateral, miolo e rodapé)", b: 0 },
+      { text: "Barra de navegação com links alinhados lado a lado", b: 1 },
+      { text: "Galeria de fotos em grade bidimensional de linhas e colunas", b: 0 },
+      { text: "Grupo de 3 botões de ação centralizados em um card", b: 1 }
+    ],
+    exp: "Grid é ideal para layouts bidimensionais rígidos; Flexbox é ideal para alinhamento de componentes unidimensionais."
+  },
+  // 23. Múltipla Escolha • Formulários
+  {
+    id: 23,
+    type: "choice",
+    badge: "23. Múltipla Escolha • Formulários",
+    title: "Sem qual atributo em um <code>&lt;input&gt;</code>, o dado digitado pelo usuário NÃO É TRANSMITIDO no envio do formulário?",
+    options: [
+      { t: "name", ok: true },
+      { t: "id", ok: false },
+      { t: "class", ok: false },
+      { t: "placeholder", ok: false }
+    ],
+    exp: "O atributo <code>name</code> define a chave do dado na requisição. Sem ele, o navegador descarta o campo no envio."
+  },
+  // 24. Previsão de Comportamento
+  {
+    id: 24,
+    type: "choice",
+    badge: "24. Previsão de Layout • Flex-wrap",
+    title: "Em um container com <code>display: flex</code> e <code>flex-wrap: wrap</code>, o que acontece com cartões de 200px quando a tela diminui para 360px?",
+    options: [
+      { t: "Eles quebram de linha e empilham-se automaticamente", ok: true },
+      { t: "Ficam espremidos forçadamente na mesma linha", ok: false },
+      { t: "Geram barra de rolagem horizontal incondicionalmente", ok: false },
+      { t: "Três cartões somem e apenas um fica visível", ok: false }
+    ],
+    exp: "<code>flex-wrap: wrap</code> permite que os itens que não cabem na largura atual saltem para a linha seguinte."
+  },
+  // 25. Completar Lacunas • CSS Grid
+  {
+    id: 25,
+    type: "gap",
+    badge: "25. Completar Lacunas • Grid",
+    title: "Qual função do CSS Grid cria 3 colunas de larguras idênticas sem precisar repetir '1fr 1fr 1fr'?",
+    snippet: 'grid-template-columns: _____1_____(3, 1fr);',
+    options: ["repeat", "fraction", "calc", "columns"],
+    correct: "repeat",
+    exp: "A função <code>repeat(3, 1fr)</code> é o atalho oficial para <code>1fr 1fr 1fr</code>."
+  },
+  // 26. Caça ao Erro • Sintaxe CSS
+  {
+    id: 26,
+    type: "errorcode",
+    badge: "26. Caça ao Erro • Sintaxe CSS",
+    title: "Clique na linha do código CSS que possui um ERRO DE PONTUAÇÃO:",
+    lines: [
+      "h1 {",
+      "  font-size: 24px;",
+      "  color = blue;",
+      "  text-align: center;",
+      "}"
+    ],
+    errLine: 2,
+    exp: "CSS usa dois-pontos (:) para separar propriedade e valor! Usar sinal de igual (=) quebra a regra inteira."
+  },
+  // 27. Múltipla Escolha • Links e Segurança
+  {
+    id: 27,
+    type: "choice",
+    badge: "27. Múltipla Escolha • Hipermídia",
+    title: "Ao criar um link externo com <code>target='_blank'</code>, qual atributo previne vulnerabilidades de segurança (tabnabbing)?",
+    options: [
+      { t: "rel='noopener noreferrer'", ok: true },
+      { t: "type='password'", ok: false },
+      { t: "security='high'", ok: false },
+      { t: "method='post'", ok: false }
+    ],
+    exp: "<code>rel='noopener noreferrer'</code> impede que a nova aba aberta acesse o objeto window da página de origem."
+  },
+  // 28. Verdadeiro ou Falso • Tabelas
+  {
+    id: 28,
+    type: "tf",
+    badge: "28. Verdadeiro ou Falso • Semântica de Tabelas",
+    title: "Em tabelas acessíveis, o elemento <code>&lt;caption&gt;</code> descreve o assunto da tabela e deve ser o primeiro filho direto de <code>&lt;table&gt;</code>.",
+    ok: true,
+    exp: "Verdadeiro! O <code>&lt;caption&gt;</code> deve ser a primeira tag interna logo após a abertura de <code>&lt;table&gt;</code>."
+  },
+  // 29. Cálculo de Conteúdo Útil (border-box)
+  {
+    id: 29,
+    type: "number",
+    badge: "29. Resposta Numérica • Box Model",
+    title: "Uma caixa tem <code>width: 300px</code>, <code>padding: 20px</code> e <code>border: 2px</code> em <code>border-box</code>. Qual é a LARGURA DO CONTEÚDO ÚTIL?",
+    sub: "Calcule: 300 - (padding total nos dois lados) - (borda total nos dois lados):",
+    answer: 256,
+    exp: "Cálculo: 300 - (20 + 20) - (2 + 2) = 300 - 40 - 4 = <strong>256px</strong>."
+  },
+  // 30. Ordenação de Estrutura HTML5
+  {
+    id: 30,
+    type: "sort",
+    badge: "30. Ordenação • Estrutura de Documento",
+    title: "Ordene os blocos fundamentais na sequência hierárquica correta de um documento HTML5:",
+    items: [
+      "&lt;!DOCTYPE html&gt;",
+      "&lt;html lang='pt-BR'&gt;",
+      "&lt;head&gt; (metadados e configurações)",
+      "&lt;body&gt; (conteúdo visível da tela)"
+    ],
+    correctOrder: [0, 1, 2, 3],
+    exp: "A ordem canônica é: DOCTYPE ➔ tag html raiz ➔ head (configurações) ➔ body (área visual)."
+  }
+];
+
+/* ==========================================================================
+   ESTADO E GAMIFICAÇÃO
+   ========================================================================== */
+let curQ = 0;
+let score = 0;
+let streak = 0;
+let userAnswers = {};
+
+function initApp() {
+  renderNavDots();
+  renderAllQuestions();
+  showQuestion(0);
+}
+
+function updateHUD() {
+  document.getElementById('val-score').textContent = score;
+  document.getElementById('val-streak').textContent = streak;
+  
+  const answeredCount = Object.keys(userAnswers).length;
+  document.getElementById('txt-prog').textContent = `Questão ${curQ + 1} de ${DATABASE.length} (${answeredCount} respondidas)`;
+  document.getElementById('bar-prog').style.width = `${(answeredCount / DATABASE.length) * 100}%`;
+}
+
+function renderNavDots() {
+  const container = document.getElementById('dots-container');
+  container.innerHTML = '';
+  DATABASE.forEach((q, idx) => {
+    const dot = document.createElement('button');
+    dot.className = 'nav-dot';
+    dot.id = `dot-${idx}`;
+    dot.textContent = idx + 1;
+    dot.onclick = () => showQuestion(idx);
+    container.appendChild(dot);
+  });
+}
+
+function showQuestion(idx) {
+  curQ = idx;
+  document.querySelectorAll('.question-card').forEach(c => c.classList.remove('active'));
+  document.getElementById(`q-card-${idx}`).classList.add('active');
+  
+  document.querySelectorAll('.nav-dot').forEach(d => d.classList.remove('active'));
+  const targetDot = document.getElementById(`dot-${idx}`);
+  if (targetDot) {
+    targetDot.classList.add('active');
+    targetDot.scrollIntoView({ behavior: 'smooth', inline: 'center', block: 'nearest' });
+  }
+  updateHUD();
+}
+
+/* ==========================================================================
+   RENDERIZAÇÃO DINÂMICA
+   ========================================================================== */
+function renderAllQuestions() {
+  const viewport = document.getElementById('questions-viewport');
+  viewport.innerHTML = '';
+
+  DATABASE.forEach((q, idx) => {
+    const card = document.createElement('section');
+    card.className = 'question-card';
+    card.id = `q-card-${idx}`;
+
+    let bodyHTML = '';
+
+    if (q.type === 'choice') {
+      bodyHTML = `<div class="options-grid">
+        ${q.options.map((opt, oIdx) => `
+          <button type="button" class="opt-btn" onclick="checkChoice(${idx}, ${oIdx})">
+            <strong style="color:var(--primary); font-size:1.05rem;">${['A','B','C','D'][oIdx]}</strong>
+            <span>${escapeHTML(opt.t)}</span>
+          </button>
+        `).join('')}
+      </div>`;
+    } else if (q.type === 'tf') {
+      bodyHTML = `<div class="options-grid">
+        <button type="button" class="opt-btn" onclick="checkTF(${idx}, true)">
+          <strong style="color:var(--ok); font-size:1.2rem;">V</strong> <span>Verdadeiro</span>
+        </button>
+        <button type="button" class="opt-btn" onclick="checkTF(${idx}, false)">
+          <strong style="color:var(--no); font-size:1.2rem;">F</strong> <span>Falso</span>
+        </button>
+      </div>`;
+    } else if (q.type === 'multi') {
+      bodyHTML = `
+        <div class="options-grid" id="multi-opts-${idx}">
+          ${q.options.map((opt, oIdx) => `
+            <button type="button" class="opt-btn" onclick="toggleMulti(${idx}, ${oIdx})">
+              <span class="chk-box" style="font-size:1.1rem; color:var(--primary);">⬜</span>
+              <span>${escapeHTML(opt.t)}</span>
+            </button>
+          `).join('')}
+        </div>
+        <button type="button" class="btn-action" style="margin-top:12px;" onclick="checkMulti(${idx})">Confirmar Seleção</button>
+      `;
+    } else if (q.type === 'typed' || q.type === 'number') {
+      bodyHTML = `
+        <div class="input-answer-box">
+          <input type="${q.type === 'number' ? 'text' : 'text'}" 
+                 class="custom-input" 
+                 id="input-${idx}" 
+                 placeholder="${q.type === 'number' ? 'Ex: 104' : 'Digite o atributo...'}" 
+                 autocomplete="off"
+                 onkeydown="if(event.key==='Enter') checkInput(${idx})">
+          <button type="button" class="btn-action" onclick="checkInput(${idx})">Confirmar</button>
+        </div>
+      `;
+    } else if (q.type === 'sort') {
+      bodyHTML = `
+        <div class="sortable-list" id="sort-list-${idx}">
+          ${q.items.map((item, iIdx) => `
+            <div class="sort-item" data-pos="${iIdx}">
+              <span>${item}</span>
+              <div class="sort-actions">
+                <button type="button" class="btn-sort" onclick="moveSort(${idx}, ${iIdx}, -1)">▲</button>
+                <button type="button" class="btn-sort" onclick="moveSort(${idx}, ${iIdx}, 1)">▼</button>
+              </div>
+            </div>
+          `).join('')}
+        </div>
+        <button type="button" class="btn-action" style="margin-top:12px;" onclick="checkSort(${idx})">Verificar Ordem</button>
+      `;
+    } else if (q.type === 'match') {
+      bodyHTML = `
+        <div class="match-grid">
+          <div class="match-col" id="match-l-${idx}">
+            ${q.pairs.map((p, pIdx) => `<button type="button" class="match-btn" data-type="l" data-idx="${pIdx}" onclick="clickMatch(${idx}, 'l', ${pIdx})">${escapeHTML(p.left)}</button>`).join('')}
+          </div>
+          <div class="match-col" id="match-r-${idx}">
+            ${shuffle([...q.pairs]).map((p) => `<button type="button" class="match-btn" data-type="r" data-val="${escapeHTML(p.right)}" onclick="clickMatch(${idx}, 'r', '${escapeHTML(p.right)}')">${escapeHTML(p.right)}</button>`).join('')}
+          </div>
+        </div>
+      `;
+    } else if (q.type === 'buckets') {
+      bodyHTML = `
+        <div class="bucket-pool" id="pool-${idx}">
+          ${q.items.map((it, iIdx) => `<span class="chip-item" id="chip-${idx}-${iIdx}" onclick="pickChip(${idx}, ${iIdx})">${it.text}</span>`).join('')}
+        </div>
+        <div class="buckets-container">
+          ${q.buckets.map((bName, bIdx) => `
+            <div class="bucket" onclick="placeChip(${idx}, ${bIdx})">
+              <div class="bucket-title">📂 ${bName} (clique para colocar)</div>
+              <div class="bucket-items" id="b-items-${idx}-${bIdx}"></div>
+            </div>
+          `).join('')}
+        </div>
+        <button type="button" class="btn-action" style="margin-top:12px;" onclick="checkBuckets(${idx})">Conferir Distribuição</button>
+      `;
+    } else if (q.type === 'gap') {
+      bodyHTML = `
+        <div style="background:#070c16; padding:18px; border:2px solid var(--border); border-radius:10px; font-family:monospace; margin:16px 0; font-size:1rem; color:#fff;">
+          ${escapeHTML(q.snippet).replace('_____1_____', `
+            <select class="gap-select" id="gap-sel-${idx}">
+              <option value="">-- escolha --</option>
+              ${q.options.map(o => `<option value="${o}">${o}</option>`).join('')}
+            </select>
+          `)}
+        </div>
+        <button type="button" class="btn-action" onclick="checkGap(${idx})">Confirmar Lacuna</button>
+      `;
+    } else if (q.type === 'hotspot') {
+      bodyHTML = `
+        <div class="box-model-diagram">
+          <div class="bm-layer bm-margin" onclick="clickHotspot(${idx}, 'margin')">
+            MARGIN (Espaço Externo)
+            <div class="bm-layer bm-border" onclick="event.stopPropagation(); clickHotspot(${idx}, 'border')">
+              BORDER (Borda)
+              <div class="bm-layer bm-padding" onclick="event.stopPropagation(); clickHotspot(${idx}, 'padding')">
+                PADDING (Espaço Interno)
+                <div class="bm-layer bm-content" onclick="event.stopPropagation(); clickHotspot(${idx}, 'content')">
+                  CONTENT (Conteúdo)
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      `;
+    } else if (q.type === 'errorcode') {
+      bodyHTML = `
+        <div class="code-error-box">
+          ${q.lines.map((l, lIdx) => `
+            <div class="code-line" onclick="clickErrorLine(${idx}, ${lIdx})">
+              <span class="line-no">${lIdx + 1}</span>
+              <code>${escapeHTML(l)}</code>
+            </div>
+          `).join('')}
+        </div>
+      `;
+    }
+
+    card.innerHTML = `
+      <div class="q-badge">${q.badge}</div>
+      <div class="q-statement">${q.title}</div>
+      ${q.sub ? `<div class="q-subtext">${q.sub}</div>` : ''}
+      ${bodyHTML}
+      <div class="feedback-box" id="fb-${idx}"></div>
+      <div class="q-footer">
+        <button type="button" class="btn-action btn-sec" onclick="showQuestion(Math.max(0, ${idx - 1}))" ${idx === 0 ? 'disabled' : ''}>⬅ Anterior</button>
+        <span style="font-size:0.85rem; color:var(--text-muted); font-weight:800;">${idx + 1} / 30</span>
+        <button type="button" class="btn-action" onclick="nextOrFinish(${idx})">${idx === 29 ? 'Finalizar Desafio 🏁' : 'Próxima ➡'}</button>
+      </div>
+    `;
+
+    viewport.appendChild(card);
+  });
+}
+
+/* ==========================================================================
+   LÓGICAS DE VALIDAÇÃO
+   ========================================================================== */
+function registerAnswer(qIdx, isOk, expText) {
+  if (userAnswers[qIdx] !== undefined) return;
+
+  userAnswers[qIdx] = { ok: isOk };
+  const fb = document.getElementById(`fb-${qIdx}`);
+  fb.className = `feedback-box show ${isOk ? 'ok' : 'no'}`;
+  fb.innerHTML = `<strong>${isOk ? '✅ Resposta Correta!' : '❌ Resposta Incorreta.'}</strong><br>${expText}`;
+
+  const dot = document.getElementById(`dot-${qIdx}`);
+  if (dot) dot.className = `nav-dot ${isOk ? 'done-ok' : 'done-no'}`;
+
+  if (isOk) {
+    score += 100 + (streak * 20);
+    streak++;
+  } else {
+    streak = 0;
+  }
+  updateHUD();
+}
+
+function checkChoice(qIdx, optIdx) {
+  const q = DATABASE[qIdx];
+  const isOk = q.options[optIdx].ok;
+  const btns = document.querySelectorAll(`#q-card-${qIdx} .opt-btn`);
+  btns.forEach((b, i) => {
+    b.disabled = true;
+    if (q.options[i].ok) b.classList.add('correct');
+    else if (i === optIdx) b.classList.add('wrong');
+  });
+  registerAnswer(qIdx, isOk, q.exp);
+}
+
+function checkTF(qIdx, val) {
+  const q = DATABASE[qIdx];
+  const isOk = (q.ok === val);
+  const btns = document.querySelectorAll(`#q-card-${qIdx} .opt-btn`);
+  btns.forEach(b => b.disabled = true);
+  if (val === true) btns[0].classList.add(isOk ? 'correct' : 'wrong');
+  else btns[1].classList.add(isOk ? 'correct' : 'wrong');
+  registerAnswer(qIdx, isOk, q.exp);
+}
+
+const multiState = {};
+function toggleMulti(qIdx, oIdx) {
+  if (userAnswers[qIdx]) return;
+  if (!multiState[qIdx]) multiState[qIdx] = new Set();
+  const set = multiState[qIdx];
+  const btn = document.querySelectorAll(`#multi-opts-${qIdx} .opt-btn`)[oIdx];
+  if (set.has(oIdx)) {
+    set.delete(oIdx);
+    btn.classList.remove('selected-multi');
+    btn.querySelector('.chk-box').textContent = '⬜';
+  } else {
+    set.add(oIdx);
+    btn.classList.add('selected-multi');
+    btn.querySelector('.chk-box').textContent = '☑️';
+  }
+}
+
+function checkMulti(qIdx) {
+  const q = DATABASE[qIdx];
+  const chosen = multiState[qIdx] || new Set();
+  const correctIndices = q.options.map((o, i) => o.ok ? i : null).filter(i => i !== null);
+  const isOk = correctIndices.length === chosen.size && correctIndices.every(i => chosen.has(i));
+  
+  const btns = document.querySelectorAll(`#multi-opts-${qIdx} .opt-btn`);
+  btns.forEach((b, i) => {
+    b.disabled = true;
+    if (q.options[i].ok && chosen.has(i)) {
+      b.className = 'opt-btn correct';
+      b.querySelector('.chk-box').textContent = '✅';
+    } else if (q.options[i].ok && !chosen.has(i)) {
+      b.className = 'opt-btn missed';
+      b.querySelector('.chk-box').textContent = '⚠️';
+    } else if (!q.options[i].ok && chosen.has(i)) {
+      b.className = 'opt-btn wrong';
+      b.querySelector('.chk-box').textContent = '❌';
+    }
+  });
+  registerAnswer(qIdx, isOk, q.exp);
+}
+
+function checkInput(qIdx) {
+  const q = DATABASE[qIdx];
+  const input = document.getElementById(`input-${qIdx}`);
+  const raw = input.value.trim().toLowerCase();
+  if (!raw) return;
+
+  input.disabled = true;
+
+  let isOk = false;
+  if (q.type === 'number') {
+    const num = parseFloat(raw.replace('px', '').trim());
+    isOk = (num === q.answer);
+  } else {
+    // Aceita variações limpas: id, id="email", "id", 'id'
+    const clean = raw.replace(/['"=\s]/g, '');
+    isOk = (clean === q.answer || clean === 'idemail');
+  }
+
+  input.style.borderColor = isOk ? 'var(--ok)' : 'var(--no)';
+  registerAnswer(qIdx, isOk, q.exp);
+}
+
+function moveSort(qIdx, iIdx, dir) {
+  if (userAnswers[qIdx]) return;
+  const list = document.getElementById(`sort-list-${qIdx}`);
+  const items = Array.from(list.children);
+  const targetIdx = iIdx + dir;
+  if (targetIdx < 0 || targetIdx >= items.length) return;
+  
+  if (dir === 1) list.insertBefore(items[targetIdx], items[iIdx]);
+  else list.insertBefore(items[iIdx], items[targetIdx]);
+
+  Array.from(list.children).forEach((el, newI) => {
+    el.querySelector('.btn-sort:nth-child(1)').onclick = () => moveSort(qIdx, newI, -1);
+    el.querySelector('.btn-sort:nth-child(2)').onclick = () => moveSort(qIdx, newI, 1);
+  });
+}
+
+function checkSort(qIdx) {
+  const q = DATABASE[qIdx];
+  const list = document.getElementById(`sort-list-${qIdx}`);
+  const currentPositions = Array.from(list.children).map(c => parseInt(c.dataset.pos, 10));
+  const isOk = currentPositions.every((val, i) => val === q.correctOrder[i]);
+  list.querySelectorAll('button').forEach(b => b.disabled = true);
+  registerAnswer(qIdx, isOk, q.exp);
+}
+
+const matchState = {};
+function clickMatch(qIdx, side, val) {
+  if (userAnswers[qIdx]) return;
+  if (!matchState[qIdx]) matchState[qIdx] = { l: null, r: null, matches: {} };
+  const st = matchState[qIdx];
+  
+  if (side === 'l') {
+    document.querySelectorAll(`#match-l-${qIdx} .match-btn`).forEach(b => b.classList.remove('selected'));
+    st.l = val;
+    document.querySelector(`#match-l-${qIdx} [data-idx="${val}"]`).classList.add('selected');
+  } else {
+    document.querySelectorAll(`#match-r-${qIdx} .match-btn`).forEach(b => b.classList.remove('selected'));
+    st.r = val;
+    document.querySelector(`#match-r-${qIdx} [data-val="${val}"]`).classList.add('selected');
+  }
+
+  if (st.l !== null && st.r !== null) {
+    const q = DATABASE[qIdx];
+    const isCorrectPair = (q.pairs[st.l].right === st.r);
+    if (isCorrectPair) {
+      document.querySelector(`#match-l-${qIdx} [data-idx="${st.l}"]`).classList.add('matched');
+      document.querySelector(`#match-r-${qIdx} [data-val="${st.r}"]`).classList.add('matched');
+      st.matches[st.l] = true;
+    }
+    st.l = null; st.r = null;
+    document.querySelectorAll(`#q-card-${qIdx} .match-btn`).forEach(b => b.classList.remove('selected'));
+
+    if (Object.keys(st.matches).length === q.pairs.length) {
+      registerAnswer(qIdx, true, q.exp);
+    }
+  }
+}
+
+const bucketState = {};
+function pickChip(qIdx, chipIdx) {
+  if (userAnswers[qIdx]) return;
+  if (!bucketState[qIdx]) bucketState[qIdx] = { selected: null, assigned: {} };
+  bucketState[qIdx].selected = chipIdx;
+  document.querySelectorAll(`#pool-${qIdx} .chip-item`).forEach((c, i) => {
+    c.classList.toggle('active-chip', i === chipIdx);
+  });
+}
+
+function placeChip(qIdx, bucketIdx) {
+  const st = bucketState[qIdx];
+  if (!st || st.selected === null) return;
+  const chipEl = document.getElementById(`chip-${qIdx}-${st.selected}`);
+  const targetBucket = document.getElementById(`b-items-${qIdx}-${bucketIdx}`);
+  targetBucket.appendChild(chipEl);
+  chipEl.classList.remove('active-chip');
+  st.assigned[st.selected] = bucketIdx;
+  st.selected = null;
+}
+
+function checkBuckets(qIdx) {
+  const q = DATABASE[qIdx];
+  const st = bucketState[qIdx] || { assigned: {} };
+  const allAssigned = q.items.every((it, i) => st.assigned[i] !== undefined);
+  if (!allAssigned) {
+    alert("Distribua todos os 4 itens nos cestos antes de conferir!");
+    return;
+  }
+  const isOk = q.items.every((it, i) => st.assigned[i] === it.b);
+  registerAnswer(qIdx, isOk, q.exp);
+}
+
+function checkGap(qIdx) {
+  const q = DATABASE[qIdx];
+  const sel = document.getElementById(`gap-sel-${qIdx}`);
+  if (!sel.value) return;
+  const isOk = (sel.value === q.correct);
+  sel.disabled = true;
+  registerAnswer(qIdx, isOk, q.exp);
+}
+
+function clickHotspot(qIdx, layerName) {
+  const q = DATABASE[qIdx];
+  const isOk = (layerName === q.target);
+  document.querySelectorAll(`#q-card-${qIdx} .bm-layer`).forEach(el => el.classList.remove('picked'));
+  event.currentTarget.classList.add('picked');
+  registerAnswer(qIdx, isOk, q.exp);
+}
+
+function clickErrorLine(qIdx, lineIdx) {
+  const q = DATABASE[qIdx];
+  const isOk = (lineIdx === q.errLine);
+  const lines = document.querySelectorAll(`#q-card-${qIdx} .code-line`);
+  lines.forEach(l => l.style.pointerEvents = 'none');
+  lines[lineIdx].classList.add('selected-err');
+  registerAnswer(qIdx, isOk, q.exp);
+}
+
+function nextOrFinish(idx) {
+  if (idx < DATABASE.length - 1) {
+    showQuestion(idx + 1);
+  } else {
+    showFinalReport();
+  }
+}
+
+/* ==========================================================================
+   RELATÓRIO FINAL
+   ========================================================================== */
+function showFinalReport() {
+  document.getElementById('questions-viewport').style.display = 'none';
+  document.getElementById('dots-container').style.display = 'none';
+  
+  const report = document.getElementById('final-report');
+  report.classList.add('show');
+
+  const total = DATABASE.length;
+  const correctCount = Object.values(userAnswers).filter(a => a.ok).length;
+  const pct = Math.round((correctCount / total) * 100);
+
+  document.getElementById('final-score-txt').textContent = `${correctCount} / ${total}`;
+  const badge = document.getElementById('final-feedback-badge');
+  if (pct >= 85) {
+    badge.textContent = "🏆 Nível Ouro: Domínio Pleno de Front-End!";
+    badge.style.color = "var(--ok)";
+  } else if (pct >= 65) {
+    badge.textContent = "👏 Nível Prata: Bom Rendimento! Revise os pontos com erro.";
+    badge.style.color = "var(--accent)";
+  } else {
+    badge.textContent = "📖 Nível Bronze: Recomenda-se refazer os laboratórios dos Temas 03 a 08.";
+    badge.style.color = "var(--no)";
+  }
+
+  let repText = `====================================================\n`;
+  repText += `RELATÓRIO OFICIAL: DESAFIO FRONT-END (30 QUESTÕES)\n`;
+  repText += `Acertos: ${correctCount} de ${total} (${pct}%) • Pontuação: ${score} pts\n`;
+  repText += `Data: ${new Date().toLocaleString('pt-BR')}\n`;
+  repText += `----------------------------------------------------\n`;
+  DATABASE.forEach((q, i) => {
+    const status = userAnswers[i]?.ok ? "[ACERTO]" : "[ERRO]";
+    repText += `Q${(i + 1).toString().padStart(2, '0')}: ${status} - ${q.badge.split('•')[0].trim()}\n`;
+  });
+  repText += `====================================================`;
+
+  document.getElementById('report-copy-box').value = repText;
+}
+
+document.getElementById('btn-copy-rep').addEventListener('click', function() {
+  const box = document.getElementById('report-copy-box');
+  box.select();
+  navigator.clipboard.writeText(box.value).then(() => {
+    this.textContent = "✅ Copiado com Sucesso!";
+    setTimeout(() => this.textContent = "📋 Copiar Resumo", 2000);
+  });
+});
+
+function escapeHTML(str) {
+  return String(str)
+    .replace(/&/g, '&amp;')
+    .replace(/</g, '&lt;')
+    .replace(/>/g, '&gt;')
+    .replace(/"/g, '&quot;')
+    .replace(/'/g, '&#39;');
+}
+
+function shuffle(arr) {
+  return arr.sort(() => Math.random() - 0.5);
+}
+
+window.addEventListener('DOMContentLoaded', initApp);
+</script>
+</body>
+</html>
